@@ -1,145 +1,115 @@
 # NOVA — ESP32-S3 AI Desktop Assistant
 
-### An Embedded Systems and Artificial Intelligence Engineering Project
+**An independent embedded systems and AI engineering project**
 
-**Project Status:** In Development — Phase 1  
-**Developer:** AlexYvan17  
-**Platform:** ESP32-S3 N16R8  
-**Development Timeline:** Approximately 6 months (flexible target)
+**Developer:** Doffou Alex Yvan Diaho  
+**Status:** Phase 1 complete; Phase 2 next  
+**Microcontroller:** ESP32-S3-WROOM-1-N16R8  
+**Development timeline:** Approximately six months (flexible estimate)  
+**Last updated:** October 26, 2026
 
----
+## About NOVA
 
-## Project Overview
+NOVA is a compact, Wi-Fi-connected desktop assistant that I am developing to explore embedded systems, electronics, C++, human–machine interfaces, and AI integration.
 
-NOVA is a compact, Wi-Fi-connected AI desktop assistant designed and developed using the ESP32-S3 microcontroller.
+My goal is to build a device with an animated face, touchscreen controls, microphone, and speaker. I plan to connect it to cloud services for speech recognition, AI responses, and speech synthesis, and to add a small set of useful actions such as timers. Those features are **planned**; the current working prototype is an ESP32-S3 input/output controller.
 
-The goal is to combine embedded systems, electronics, artificial intelligence, and hardware-software integration into a functional desktop device capable of understanding voice commands, responding through a speaker, displaying animated facial expressions, and executing useful tasks.
+I'm building NOVA in stages so I can understand and test each part before integrating it into the full system.
 
-NOVA is being developed incrementally, with each phase focusing on practical engineering skills and measurable results.
+## Current progress
 
-## Project Objectives
+**Phase 1 — ESP32-S3 fundamentals: completed.** I have compiled and uploaded firmware, verified the board's memory, blinked an LED, read a tactile button, tested a KY-040 rotary encoder, and combined those components into a PWM LED brightness controller.
 
-- Develop reliable firmware for the ESP32-S3 using C++.
-- Design an interactive touchscreen interface with animated facial expressions.
-- Implement Wi-Fi connectivity and cloud-based AI services.
-- Integrate a microphone, amplifier, and speaker for voice interaction.
-- Execute validated commands such as timers and supported device controls.
-- Design and assemble a compact desktop enclosure.
-- Document hardware designs, software development, testing, and engineering decisions.
+The integrated controller currently supports:
 
-## Hardware Platform
+- Clockwise encoder rotation to increase brightness in 10% steps.
+- Counterclockwise rotation to decrease brightness in 10% steps.
+- Encoder-button press to toggle the LED on and off.
+- Separate button press to restore 50% brightness and turn the LED on.
+- Brightness limits of 0% to 100%.
 
-| Component | Purpose | Status |
+The behavior was checked through Serial Monitor output and hands-on testing. See [the engineering log](docs/engineering-log.md) for the development story and test observations.
+
+## Hardware
+
+| Component | Role | Status |
 |---|---|---|
-| ESP32-S3 N16R8 | Main microcontroller | Owned |
-| KY-040 Rotary Encoder | Menu navigation and volume control | Owned |
-| Tactile Push Buttons | User input | Owned |
-| 2N2222 Transistors | Switching and driver circuits | Owned |
-| 2-inch Capacitive Touchscreen | Display and graphical interface | Planned |
-| INMP441 Microphone | Voice input | Planned |
-| MAX98357A Amplifier | Audio output | Planned |
-| Speaker | Voice playback | Planned |
-| IR LED | Infrared device control | Planned |
+| ESP32-S3-WROOM-1-N16R8 development board | Main controller | In use |
+| Red LED and 330 Ω resistor | Output and PWM practice | Tested |
+| Tactile push button | Digital input | Tested |
+| KY-040 rotary encoder | Rotation and push input | Tested |
+| Breadboard and jumper wires | Prototype wiring | In use |
+| Waveshare 2-inch SPI capacitive touchscreen | Animated face and touch interface | Planned for Phase 2; integration not yet verified |
+| INMP441 I²S microphone | Voice input | Planned |
+| MAX98357A I²S amplifier and speaker | Voice output | Planned |
+| IR components | Possible supported device control | Future work |
 
-## System Architecture
+The ESP32-S3 reported **16 MB flash**, **8 MB PSRAM**, and a **240 MHz CPU** during firmware testing.
 
-NOVA uses a layered architecture:
+## Phase 1 wiring
 
-**User Interaction → ESP32-S3 Hardware → Wi-Fi Connectivity → Cloud AI Services → Validated Task Execution**
+| ESP32-S3 pin | Connection |
+|---|---|
+| GPIO4 | 330 Ω resistor → red LED anode; LED cathode → GND |
+| GPIO5 | Separate tactile push button → GND (`INPUT_PULLUP`) |
+| GPIO6 | KY-040 CLK |
+| GPIO7 | KY-040 DT |
+| GPIO8 | KY-040 SW |
+| 3V3 | KY-040 + |
+| GND | KY-040 GND and common ground |
 
-The ESP32-S3 handles local hardware interactions, graphical interfaces, and communication.
+**Electrical note:** The encoder module is powered from **3.3 V**, not 5 V. Power should be disconnected before changing wiring. This table documents the tested connections; a formal schematic and photographs are still to be added.
 
-Cloud services provide advanced speech recognition, AI processing, and speech synthesis.
+## Development environment
 
-Task requests are translated into structured commands, validated, and executed through authorized hardware functions or external services.
-
-Sensitive actions require appropriate authorization and confirmation.
-
-## Development Roadmap
-
-| Phase | Description | Status |
-|---|---|---|
-| 1 | ESP32 Fundamentals | In Progress |
-| 2 | Touchscreen and Graphical Interface | Planned |
-| 3 | Wi-Fi and Cloud Integration | Planned |
-| 4 | Audio and Voice Interaction | Planned |
-| 5 | Task Execution | Planned |
-| 6 | Enclosure and Final Integration | Planned |
-| 7 | V2 Extensions and Phone Integration | Future |
-
-### Phase 1 — ESP32 Fundamentals
-
-**Objective:** Establish a reliable hardware and firmware development environment.
-
-Planned milestones:
-
-1. Configure the ESP32-S3 development environment.
-2. Upload the first firmware program: `Hello NOVA!`
-3. Control LEDs using GPIO outputs.
-4. Read push-button inputs.
-5. Interface with the KY-040 rotary encoder.
-6. Combine inputs and outputs into a functional prototype.
-7. Document testing and debugging results.
-
-**Expected Deliverable:** A working ESP32-S3 prototype demonstrating basic input/output control.
-
-## Software and Technologies
-
-Planned technologies include:
-
-- C++ and embedded firmware development
 - Visual Studio Code and PlatformIO
-- Git and GitHub
-- SPI, I²C, and I²S communication
-- LVGL graphical user interfaces
-- Wi-Fi and HTTPS communication
-- Cloud AI APIs
-- Structured task execution
-- KiCad for electrical schematics
+- Arduino framework for ESP32
+- C++
+- USB serial connection and Serial Monitor at 115200 baud
 
-## Future Development — NOVA V2
+The project uses the PlatformIO board target `esp32-s3-devkitc-1`, with configuration overrides for the 16 MB flash and 8 MB OPI PSRAM on my specific board. Local COM-port names can vary between computers.
 
-Potential future extensions include:
+## Planned architecture
 
-- Bluetooth LE phone connectivity
-- Supported phone automation integrations
-- Wake-word detection
-- Advanced smart-home integrations
-- Custom printed circuit board
+1. **Local interface:** ESP32-S3 reads buttons, rotary encoder, microphone, and touchscreen.
+2. **Connectivity:** Wi-Fi connects the device to a backend or authorized cloud services.
+3. **AI pipeline:** Speech-to-text, language-model processing, and text-to-speech provide voice interaction.
+4. **Action handling:** Structured commands are checked before NOVA performs supported tasks.
+5. **Feedback:** The screen, speaker, and other outputs communicate status and responses.
 
-These features are not required for NOVA V1.
+These are design goals, not implemented features yet. Sensitive credentials should be kept out of the public firmware repository.
 
-## Definition of Done — NOVA V1
+## Development roadmap
 
-NOVA V1 will be considered complete when the device can:
+| Phase | Focus | Status |
+|---|---|---|
+| 1 | ESP32-S3 setup, GPIO, buttons, encoder, PWM | **Completed** |
+| 2 | Touchscreen bring-up, graphics, animated face | **Next** |
+| 3 | Wi-Fi connectivity and cloud integration | Planned |
+| 4 | Microphone, speaker, and voice interaction | Planned |
+| 5 | Useful tasks and validated commands | Planned |
+| 6 | Enclosure and complete-system integration | Planned |
+| 7 | Optional V2 features, including supported phone integration | Future |
 
-1. Operate as a standalone desktop prototype.
-2. Display an animated face.
-3. Respond to touchscreen interactions.
-4. Receive a spoken question.
-5. Generate and play a spoken response.
-6. Execute at least one supported real-world task.
+## NOVA V1 success criteria
 
-## Engineering Documentation
+NOVA V1 will be considered complete when a standalone desktop prototype can:
 
-This repository will include:
+- Display an animated face.
+- Respond to touchscreen input.
+- Accept a spoken question and play a spoken response.
+- Carry out at least one validated task, such as a timer.
 
-- Firmware source code
-- Hardware schematics and wiring diagrams
-- Component inventory
-- Engineering development logs
-- Testing and validation results
-- Prototype photographs
-- Design decisions and troubleshooting notes
+## Repository guide
 
-## Project Purpose
+- `src/main.cpp` — firmware source code.
+- `platformio.ini` — PlatformIO build settings.
+- `docs/engineering-log.md` — experiments, observations, and lessons learned.
+- `docs/hardware/` — planned wiring diagrams and component documentation.
+- `docs/testing/` — planned test records and evidence.
 
-NOVA is an independent engineering project intended to strengthen practical skills in embedded systems, electronics, programming, communication protocols, system integration, and AI-assisted device development.
+## Why I'm building this
 
-The project emphasizes understanding engineering principles, developing reliable solutions, and maintaining professional technical documentation.
+I'm studying electrical engineering and want practical experience beyond coursework. NOVA gives me a way to practice firmware development, circuit prototyping, debugging, and eventually hardware/software integration. I'm documenting the work as I learn, including the problems I encounter and how I solve them.
 
----
-
-**Current Focus:** Phase 1 — ESP32-S3 Fundamentals
-
-*This repository will be updated as development progresses.*
+**Next:** Bring up the touchscreen and begin the first animated face prototype.
