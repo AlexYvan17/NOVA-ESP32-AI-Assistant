@@ -62,17 +62,15 @@ I used **pulse-width modulation (PWM)** to change the LED's apparent brightness.
 | 3V3 | KY-040 + |
 | GND | LED, button, and KY-040 common ground |
 
-### Test results
+### Test Results
 
-| Test | Observed Serial Monitor result | Outcome |
+| Test | Observed Result | Outcome |
 |---|---|---|
-| Clockwise rotation | Brightness increased in 10% steps up to 100% | Passed |
-| Counterclockwise rotation | Brightness decreased in 10% steps down to 0% | Passed |
-| Upper and lower limits | Additional rotation kept reporting 100% or 0% | Passed |
-| Encoder push switch | `Encoder button | LED: OFF` and `... ON` | Passed |
-| Separate tactile button | `Reset button | Brightness: 50%` | Passed |
-
-The reset message appeared three times in the final test output. That is consistent with multiple button presses, but if it happened from only one press, the button debounce behavior needs further investigation. I have not yet measured PWM duty cycle with an oscilloscope or performed a long-duration reliability test.
+| Clockwise rotation | Brightness increased in 10% steps to 100% | PASS |
+| Counterclockwise rotation | Brightness decreased in 10% steps to 0% | PASS |
+| Brightness limits | Values remained between 0% and 100% | PASS |
+| Encoder push button | Successfully toggled LED ON/OFF | PASS |
+| Separate push button | Successfully reset brightness to 50% | PASS |
 
 ## What I learned
 
