@@ -30,6 +30,12 @@ The integrated controller currently supports:
 
 The behavior was checked through Serial Monitor output and hands-on testing. See [the engineering log](docs/engineering-log.md) for the development story and test observations.
 
+### Phase 1 — Working Prototype
+
+![NOVA Phase 1 ESP32-S3 prototype](images/phase-1/phase%201%20prototype.jpeg)
+
+*My first integrated NOVA prototype, featuring an ESP32-S3, KY-040 rotary encoder, tactile push button, and PWM-controlled LED.*
+
 ## Hardware
 
 | Component | Role | Status |
