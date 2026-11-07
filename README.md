@@ -1,121 +1,178 @@
 # NOVA — ESP32-S3 AI Desktop Assistant
 
-**An independent embedded systems and AI engineering project**
+NOVA is a personal embedded-systems engineering project focused on developing an interactive desktop AI assistant using the **ESP32-S3-WROOM-1-N16R8** microcontroller.
 
-**Developer:** Doffou Alex Yvan Diaho  
-**Status:** Phase 1 complete; Phase 2 next  
-**Microcontroller:** ESP32-S3-WROOM-1-N16R8  
-**Development timeline:** Approximately six months (flexible estimate)  
-**Last updated:** October 26, 2026
+The goal is to combine embedded programming, electronics, graphical interfaces, audio processing, Wi-Fi connectivity, and cloud-based artificial intelligence into a functional desktop device.
 
-## About NOVA
+## Project Status
 
-NOVA is a compact, Wi-Fi-connected desktop assistant that I am developing to explore embedded systems, electronics, C++, human–machine interfaces, and AI integration.
+**Phase 1: Hardware Bring-Up — Completed**
 
-My goal is to build a device with an animated face, touchscreen controls, microphone, and speaker. I plan to connect it to cloud services for speech recognition, AI responses, and speech synthesis, and to add a small set of useful actions such as timers. Those features are **planned**; the current working prototype is an ESP32-S3 input/output controller.
+**Phase 2: Display and Facial Animation — In Progress**
 
-I'm building NOVA in stages so I can understand and test each part before integrating it into the full system.
+### Completed Milestones
 
-## Current progress
-
-**Phase 1 — ESP32-S3 fundamentals: completed.** I have compiled and uploaded firmware, verified the board's memory, blinked an LED, read a tactile button, tested a KY-040 rotary encoder, and combined those components into a PWM LED brightness controller.
-
-The integrated controller currently supports:
-
-- Clockwise encoder rotation to increase brightness in 10% steps.
-- Counterclockwise rotation to decrease brightness in 10% steps.
-- Encoder-button press to toggle the LED on and off.
-- Separate button press to restore 50% brightness and turn the LED on.
-- Brightness limits of 0% to 100%.
-
-The behavior was checked through Serial Monitor output and hands-on testing. See [the engineering log](docs/engineering-log.md) for the development story and test observations.
-
-### Phase 1 — Working Prototype
-
-![NOVA Phase 1 ESP32-S3 prototype](images/phase-1/phase%201%20prototype.jpeg)
-
-*My first integrated NOVA prototype, featuring an ESP32-S3, KY-040 rotary encoder, tactile push button, and PWM-controlled LED.*
+- ESP32-S3 development environment configured using VS Code and PlatformIO.
+- GPIO output and LED control verified.
+- PWM LED brightness control implemented.
+- Push-button input tested.
+- KY-040 rotary encoder integrated for brightness adjustment and LED control.
+- 16 MB flash and 8 MB PSRAM verified.
+- 2-inch ST7789 240×320 SPI display connected and initialized.
+- SPI communication and color rendering verified.
+- Text rendering implemented.
+- Automatic eye blinking developed.
+- Horizontal eye movement implemented.
+- Four facial expressions developed: Neutral, Happy, Sleepy, and Surprised.
 
 ## Hardware
 
-| Component | Role | Status |
-|---|---|---|
-| ESP32-S3-WROOM-1-N16R8 development board | Main controller | In use |
-| Red LED and 330 Ω resistor | Output and PWM practice | Tested |
-| Tactile push button | Digital input | Tested |
-| KY-040 rotary encoder | Rotation and push input | Tested |
-| Breadboard and jumper wires | Prototype wiring | In use |
-| Waveshare 2-inch SPI capacitive touchscreen | Animated face and touch interface | Planned for Phase 2; integration not yet verified |
-| INMP441 I²S microphone | Voice input | Planned |
-| MAX98357A I²S amplifier and speaker | Voice output | Planned |
-| IR components | Possible supported device control | Future work |
-
-The ESP32-S3 reported **16 MB flash**, **8 MB PSRAM**, and a **240 MHz CPU** during firmware testing.
-
-## Phase 1 wiring
-
-| ESP32-S3 pin | Connection |
+| Component | Purpose |
 |---|---|
-| GPIO4 | 330 Ω resistor → red LED anode; LED cathode → GND |
-| GPIO5 | Separate tactile push button → GND (`INPUT_PULLUP`) |
-| GPIO6 | KY-040 CLK |
-| GPIO7 | KY-040 DT |
-| GPIO8 | KY-040 SW |
-| 3V3 | KY-040 + |
-| GND | KY-040 GND and common ground |
+| ESP32-S3-WROOM-1-N16R8 | Main microcontroller |
+| 2-inch ST7789 IPS TFT | Animated face and user interface |
+| INMP441 I²S microphone | Voice input |
+| MAX98357A I²S amplifier | Audio output |
+| 8 Ω speaker | Speech and notification sounds |
+| KY-040 rotary encoder | Physical input |
+| WS2812B RGB LED | Status indication |
+| IR transmitter and receiver | Future infrared control |
+| Breadboard and jumper wires | Prototyping |
 
-**Electrical note:** The encoder module is powered from **3.3 V**, not 5 V. Power should be disconnected before changing wiring. This table documents the tested connections; a formal schematic and photographs are still to be added.
+Some components listed above are planned for integration and are not yet part of the working firmware.
 
-## Development environment
+## Software and Development Tools
 
-- Visual Studio Code and PlatformIO
+- Visual Studio Code
+- PlatformIO
 - Arduino framework for ESP32
 - C++
-- USB serial connection and Serial Monitor at 115200 baud
+- TFT_eSPI graphics library
+- Git and GitHub
 
-The project uses the PlatformIO board target `esp32-s3-devkitc-1`, with configuration overrides for the 16 MB flash and 8 MB OPI PSRAM on my specific board. Local COM-port names can vary between computers.
+## Phase 1 — Hardware Bring-Up
 
-## Planned architecture
+Phase 1 focused on learning ESP32-S3 programming and verifying essential hardware functionality.
 
-1. **Local interface:** ESP32-S3 reads buttons, rotary encoder, microphone, and touchscreen.
-2. **Connectivity:** Wi-Fi connects the device to a backend or authorized cloud services.
-3. **AI pipeline:** Speech-to-text, language-model processing, and text-to-speech provide voice interaction.
-4. **Action handling:** Structured commands are checked before NOVA performs supported tasks.
-5. **Feedback:** The screen, speaker, and other outputs communicate status and responses.
+Implemented:
 
-These are design goals, not implemented features yet. Sensitive credentials should be kept out of the public firmware repository.
+- LED blinking and GPIO control.
+- PWM brightness adjustment.
+- Push-button input using internal pull-up resistors.
+- Rotary encoder position tracking.
+- Serial Monitor debugging.
+- Flash and PSRAM verification.
 
-## Development roadmap
+**Result:** The ESP32-S3 successfully performed the required hardware-control tasks.
 
-| Phase | Focus | Status |
-|---|---|---|
-| 1 | ESP32-S3 setup, GPIO, buttons, encoder, PWM | **Completed** |
-| 2 | Touchscreen bring-up, graphics, animated face | **Next** |
-| 3 | Wi-Fi connectivity and cloud integration | Planned |
-| 4 | Microphone, speaker, and voice interaction | Planned |
-| 5 | Useful tasks and validated commands | Planned |
-| 6 | Enclosure and complete-system integration | Planned |
-| 7 | Optional V2 features, including supported phone integration | Future |
+## Phase 2 — Display and Facial Animation
 
-## NOVA V1 success criteria
+Phase 2 focuses on building NOVA's graphical personality.
 
-NOVA V1 will be considered complete when a standalone desktop prototype can:
+### Step 1 — ST7789 Display Integration
 
-- Display an animated face.
-- Respond to touchscreen input.
-- Accept a spoken question and play a spoken response.
-- Carry out at least one validated task, such as a timer.
+Configured the 240×320 ST7789 display using TFT_eSPI.
 
-## Repository guide
+Verified:
 
-- `src/main.cpp` — firmware source code.
-- `platformio.ini` — PlatformIO build settings.
-- `docs/engineering-log.md` — experiments, observations, and lessons learned.
-- `docs/hardware/` — planned wiring diagrams and component documentation.
-- `docs/testing/` — planned test records and evidence.
+- SPI initialization.
+- Red, green, and blue screen rendering.
+- Text rendering.
+- Display orientation and graphical drawing functions.
 
-## Why I'm building this
+### Step 2 — Animated Eyes
 
-I'm studying electrical engineering and want practical experience beyond coursework. NOVA gives me a way to practice firmware development, circuit prototyping, debugging, and eventually hardware/software integration. I'm documenting the work as I learn, including the problems I encounter and how I solve them.
+Developed a basic facial animation featuring:
 
-**Next:** Bring up the touchscreen and begin the first animated face prototype.
+- Two rounded cyan eyes.
+- Automatic blinking.
+- Horizontal eye movement.
+- Improved rendering using partial screen updates.
+
+### Step 3 — Facial Expressions
+
+Implemented a reusable facial-expression system using a C++ enumeration and dedicated drawing functions.
+
+Available expressions:
+
+- **Neutral:** Standard open eyes.
+- **Happy:** Curved smiling eyes.
+- **Sleepy:** Narrow horizontal eyes.
+- **Surprised:** Large outlined oval eyes.
+
+The expressions can be selected programmatically, providing a foundation for future interaction-driven behavior.
+
+### Current Display Pin Configuration
+
+| ST7789 | ESP32-S3 |
+|---|---|
+| GND | GND |
+| VCC | 3V3 |
+| SCL | GPIO12 |
+| SDA/MOSI | GPIO11 |
+| RES | GPIO10 |
+| DC | GPIO9 |
+| CS | GPIO13 |
+| BLK | 3V3 |
+
+### Technical Notes
+
+During initial testing, the ESP32-S3 did not complete TFT_eSPI initialization when `tft.init()` was called directly.
+
+Explicitly initializing SPI before the display resolved the observed issue:
+
+```cpp
+SPI.begin(12, -1, 11, 13);
+tft.init();
+```
+
+This initialization sequence is retained in the working firmware. The underlying cause has not yet been conclusively established.
+
+## Development Roadmap
+
+- [x] Phase 1 — ESP32-S3 hardware bring-up.
+- [x] Phase 2 — ST7789 display initialization.
+- [x] Phase 2 — Automatic blinking.
+- [x] Phase 2 — Horizontal eye movement.
+- [x] Phase 2 — Four facial expressions.
+- [ ] Phase 2 — Nonblocking animation engine.
+- [ ] Phase 2 — Touch interface integration, subject to compatible hardware.
+- [ ] Phase 3 — Microphone and speaker integration.
+- [ ] Phase 3 — Speech input and output.
+- [ ] Phase 4 — Wi-Fi and cloud AI integration.
+- [ ] Phase 5 — Interactive graphical menu and timers.
+- [ ] Phase 6 — Additional connectivity and device controls.
+- [ ] Phase 7 — Final enclosure and power integration.
+
+## Long-Term Goal
+
+NOVA is intended to become a functional desktop assistant capable of:
+
+- Answering spoken questions.
+- Displaying animated expressions.
+- Setting timers and providing notifications.
+- Interacting through a graphical interface.
+- Connecting to cloud-based AI services.
+- Supporting additional device-control capabilities.
+
+The project is being developed incrementally, with each phase introducing new hardware, software, and system-integration challenges.
+
+## Engineering Skills Developed
+
+- Embedded C++ programming.
+- ESP32-S3 firmware development.
+- GPIO, PWM, and SPI communication.
+- Hardware debugging and troubleshooting.
+- TFT graphics programming.
+- Animation and state-machine design.
+- Modular embedded-system architecture.
+
+## Project Status Summary
+
+**Current milestone:** Phase 2 — Facial Expressions Completed.
+
+**Next milestone:** Nonblocking facial-animation engine using `millis()`.
+
+---
+
+*An ongoing personal electrical engineering and embedded systems project.*
