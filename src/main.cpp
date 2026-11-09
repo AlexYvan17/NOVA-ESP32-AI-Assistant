@@ -5,18 +5,39 @@
 
 TFT_eSPI tft = TFT_eSPI();
 
-// Display colors
+// =====================================
+// HARDWARE PINS
+// =====================================
+
+// KY-040 rotary encoder
+const uint8_t CLK_PIN = 6;
+const uint8_t DT_PIN = 7;
+const uint8_t SW_PIN = 8;
+
+// ST7789 display
+// MOSI = GPIO11
+// SCLK = GPIO12
+// CS   = GPIO13
+// DC   = GPIO9
+// RST  = GPIO10
+
+// =====================================
+// DISPLAY SETTINGS
+// =====================================
+
 const uint16_t BG_COLOR = TFT_BLACK;
 const uint16_t EYE_COLOR = TFT_CYAN;
 
-// Eye dimensions
 const int LEFT_X = 46;
 const int RIGHT_X = 148;
 const int EYE_Y = 110;
 const int EYE_W = 46;
 const int EYE_H = 72;
 
-// Expression states
+// =====================================
+// FACE STATES
+// =====================================
+
 enum FaceState {
     NEUTRAL,
     HAPPY,
@@ -26,7 +47,17 @@ enum FaceState {
 
 FaceState currentFace = NEUTRAL;
 
-// Animation states
+const char* faceNames[] = {
+    "NEUTRAL",
+    "HAPPY",
+    "SLEEPY",
+    "SURPRISED"
+};
+
+// =====================================
+// BLINK STATE MACHINE
+// =====================================
+
 enum BlinkState {
     EYES_OPEN,
     EYES_CLOSING,
@@ -35,20 +66,45 @@ enum BlinkState {
 
 BlinkState blinkState = EYES_OPEN;
 
-// Timing
-unsigned long lastExpressionChange = 0;
+int blinkHeight = EYE_H;
+
 unsigned long lastBlink = 0;
 unsigned long lastBlinkFrame = 0;
 
-const unsigned long EXPRESSION_INTERVAL = 3000;
-const unsigned long BLINK_INTERVAL = 1000;
+const unsigned long BLINK_INTERVAL = 3000;
 const unsigned long BLINK_FRAME_INTERVAL = 25;
 
-// Blink animation
-int blinkHeight = EYE_H;
 const int BLINK_STEP = 6;
 
-// Draw the NOVA label
+// =====================================
+// ENCODER STATE MACHINE
+// =====================================
+
+// Transition lookup table
+const int8_t transitionTable[16] = {
+     0, -1,  1,  0,
+     1,  0,  0, -1,
+    -1,  0,  0,  1,
+     0,  1, -1,  0
+};
+
+uint8_t previousEncoderState = 0;
+int8_t encoderCount = 0;
+
+// Change to -1 if directions are reversed
+const int ENCODER_DIRECTION = 1;
+
+// Button debounce
+bool lastButtonReading = HIGH;
+bool stableButtonState = HIGH;
+
+unsigned long lastDebounceTime = 0;
+const unsigned long DEBOUNCE_MS = 40;
+
+// =====================================
+// DISPLAY DRAWING FUNCTIONS
+// =====================================
+
 void drawLabel() {
     tft.setTextColor(EYE_COLOR, BG_COLOR);
     tft.setTextSize(2);
@@ -56,7 +112,6 @@ void drawLabel() {
     tft.print("NOVA");
 }
 
-// Neutral expression
 void drawNeutral() {
     tft.fillRoundRect(
         LEFT_X, EYE_Y,
@@ -71,32 +126,38 @@ void drawNeutral() {
     );
 }
 
-// Happy expression
 void drawHappy() {
     for (int x = 0; x <= EYE_W; x++) {
         float normalized =
-            (x - EYE_W / 2.0f) / (EYE_W / 2.0f);
+            (x - EYE_W / 2.0f) /
+            (EYE_W / 2.0f);
 
         int y = 155 -
-            (int)(28 * (1.0f - normalized * normalized));
+            (int)(28 * (1.0f -
+            normalized * normalized));
 
-        tft.fillCircle(LEFT_X + x, y, 4, EYE_COLOR);
-        tft.fillCircle(RIGHT_X + x, y, 4, EYE_COLOR);
+        tft.fillCircle(
+            LEFT_X + x, y, 4, EYE_COLOR
+        );
+
+        tft.fillCircle(
+            RIGHT_X + x, y, 4, EYE_COLOR
+        );
     }
 }
 
-// Sleepy expression
 void drawSleepy() {
     tft.fillRoundRect(
-        LEFT_X, 145, EYE_W, 6, 3, EYE_COLOR
+        LEFT_X, 145,
+        EYE_W, 6, 3, EYE_COLOR
     );
 
     tft.fillRoundRect(
-        RIGHT_X, 145, EYE_W, 6, 3, EYE_COLOR
+        RIGHT_X, 145,
+        EYE_W, 6, 3, EYE_COLOR
     );
 }
 
-// Surprised expression
 void drawSurprised() {
     tft.fillEllipse(
         LEFT_X + EYE_W / 2,
@@ -123,37 +184,60 @@ void drawSurprised() {
     );
 }
 
-// Render selected expression
+// =====================================
+// FACE CONTROL
+// =====================================
+
 void drawFace(FaceState state) {
     currentFace = state;
 
-    // Clear only the eye region
-    tft.fillRect(35, 95, 175, 105, BG_COLOR);
+    // Clear only the eye area
+    tft.fillRect(
+        35, 95, 175, 105, BG_COLOR
+    );
 
     switch (state) {
         case NEUTRAL:
             drawNeutral();
-            Serial.println("Expression: NEUTRAL");
             break;
 
         case HAPPY:
             drawHappy();
-            Serial.println("Expression: HAPPY");
             break;
 
         case SLEEPY:
             drawSleepy();
-            Serial.println("Expression: SLEEPY");
             break;
 
         case SURPRISED:
             drawSurprised();
-            Serial.println("Expression: SURPRISED");
             break;
     }
+
+    Serial.print("Expression: ");
+    Serial.println(faceNames[currentFace]);
 }
 
-// Draw one frame of the blink
+void selectFace(FaceState newFace) {
+    // Cancel any unfinished blink
+    blinkState = EYES_OPEN;
+    blinkHeight = EYE_H;
+    lastBlink = millis();
+
+    drawFace(newFace);
+}
+
+void changeFace(int direction) {
+    int next =
+        ((int)currentFace + direction + 4) % 4;
+
+    selectFace((FaceState)next);
+}
+
+// =====================================
+// NONBLOCKING BLINK ANIMATION
+// =====================================
+
 void drawBlinkFrame(int height) {
     tft.fillRect(
         LEFT_X - 2, EYE_Y - 2,
@@ -167,36 +251,43 @@ void drawBlinkFrame(int height) {
         BG_COLOR
     );
 
-    int y = EYE_Y + (EYE_H - height) / 2;
+    int y =
+        EYE_Y + (EYE_H - height) / 2;
+
     int radius = min(20, height / 2);
 
     tft.fillRoundRect(
-        LEFT_X, y, EYE_W, height,
+        LEFT_X, y,
+        EYE_W, height,
         radius, EYE_COLOR
     );
 
     tft.fillRoundRect(
-        RIGHT_X, y, EYE_W, height,
+        RIGHT_X, y,
+        EYE_W, height,
         radius, EYE_COLOR
     );
 }
 
-// Update blinking without delay()
 void updateBlink(unsigned long now) {
     if (currentFace != NEUTRAL) {
         return;
     }
 
     if (blinkState == EYES_OPEN) {
-        if (now - lastBlink >= BLINK_INTERVAL) {
+        if (now - lastBlink >=
+            BLINK_INTERVAL) {
+
             blinkState = EYES_CLOSING;
             blinkHeight = EYE_H;
             lastBlinkFrame = now;
         }
+
         return;
     }
 
-    if (now - lastBlinkFrame < BLINK_FRAME_INTERVAL) {
+    if (now - lastBlinkFrame <
+        BLINK_FRAME_INTERVAL) {
         return;
     }
 
@@ -219,6 +310,7 @@ void updateBlink(unsigned long now) {
             blinkHeight = EYE_H;
             blinkState = EYES_OPEN;
             lastBlink = now;
+
             drawFace(NEUTRAL);
         }
         else {
@@ -227,31 +319,90 @@ void updateBlink(unsigned long now) {
     }
 }
 
-// Change expression periodically
-void updateExpression(unsigned long now) {
-    if (now - lastExpressionChange <
-        EXPRESSION_INTERVAL) {
+// =====================================
+// ROTARY ENCODER INPUT
+// =====================================
+
+void updateEncoder() {
+    uint8_t currentState =
+        (digitalRead(CLK_PIN) << 1) |
+         digitalRead(DT_PIN);
+
+    if (currentState == previousEncoderState) {
         return;
     }
 
-    lastExpressionChange = now;
+    uint8_t index =
+        (previousEncoderState << 2) |
+         currentState;
 
-    // Cancel any unfinished blink
-    blinkState = EYES_OPEN;
-    blinkHeight = EYE_H;
-    lastBlink = now;
+    encoderCount += transitionTable[index];
 
-    FaceState nextFace =
-        static_cast<FaceState>((currentFace + 1) % 4);
+    previousEncoderState = currentState;
 
-    drawFace(nextFace);
+    // One complete quadrature cycle
+    if (encoderCount >= 4) {
+        encoderCount = 0;
+
+        Serial.println("Encoder: CLOCKWISE");
+
+        changeFace(ENCODER_DIRECTION);
+    }
+    else if (encoderCount <= -4) {
+        encoderCount = 0;
+
+        Serial.println("Encoder: COUNTERCLOCKWISE");
+
+        changeFace(-ENCODER_DIRECTION);
+    }
 }
+
+// =====================================
+// ENCODER BUTTON
+// =====================================
+
+void updateButton(unsigned long now) {
+    bool reading = digitalRead(SW_PIN);
+
+    if (reading != lastButtonReading) {
+        lastDebounceTime = now;
+    }
+
+    if (now - lastDebounceTime >=
+        DEBOUNCE_MS) {
+
+        if (reading != stableButtonState) {
+            stableButtonState = reading;
+
+            if (stableButtonState == LOW) {
+                Serial.println("Encoder button pressed");
+
+                selectFace(NEUTRAL);
+            }
+        }
+    }
+
+    lastButtonReading = reading;
+}
+
+// =====================================
+// INITIALIZATION
+// =====================================
 
 void setup() {
     Serial.begin(115200);
 
-    // Explicit SPI initialization is required
-    // for this working hardware configuration.
+    // Encoder inputs
+    pinMode(CLK_PIN, INPUT_PULLUP);
+    pinMode(DT_PIN, INPUT_PULLUP);
+    pinMode(SW_PIN, INPUT_PULLUP);
+
+    previousEncoderState =
+        (digitalRead(CLK_PIN) << 1) |
+         digitalRead(DT_PIN);
+
+    // Display initialization
+    // Preserve this working sequence
     SPI.begin(12, -1, 11, 13);
 
     tft.init();
@@ -259,23 +410,26 @@ void setup() {
     tft.fillScreen(BG_COLOR);
 
     drawLabel();
-    drawFace(NEUTRAL);
+    selectFace(NEUTRAL);
 
-    unsigned long now = millis();
-    lastExpressionChange = now;
-    lastBlink = now;
-
-    Serial.println("NOVA nonblocking animation ready");
+    Serial.println(
+        "NOVA Interactive Face System Ready"
+    );
 }
+
+// =====================================
+// MAIN LOOP
+// =====================================
 
 void loop() {
     unsigned long now = millis();
 
-    updateExpression(now);
+    updateEncoder();
+    updateButton(now);
     updateBlink(now);
 
-    // Future tasks can run here:
-    // readButtons();
+    // Future NOVA tasks:
+    // updateAudio();
+    // updateWiFi();
     // updateTimers();
-    // processAudio();
 }
